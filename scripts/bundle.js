@@ -144,7 +144,7 @@
 	    value: function generateField() {
 	      this.towerSize = 30;
 	
-	      var field = new _field2.default(this.update.bind(this));
+	      var field = new _field2.default();
 	
 	      this.stage.addChild(field.elements);
 	
@@ -464,7 +464,7 @@
 	
 	    this.radius = 5;
 	
-	    this.elements = this.generateProjectile();
+	    this.elements = this.projectileSprite();
 	  }
 	
 	  _createClass(Projectile, [{
@@ -477,9 +477,24 @@
 	      return projectile;
 	    }
 	  }, {
+	    key: "projectileSprite",
+	    value: function projectileSprite() {
+	      var data = {
+	        images: ['./assets/plasmabullet.png'],
+	        frames: { width: 10, height: 10 }
+	      };
+	      var spriteSheet = new createjs.SpriteSheet(data);
+	      var projectile = new createjs.Sprite(spriteSheet);
+	
+	      projectile.regX = -15;
+	      projectile.regY = -15;
+	
+	      return projectile;
+	    }
+	  }, {
 	    key: "deleteProjectile",
 	    value: function deleteProjectile() {
-	      this.elements.graphics.clear();
+	      // this.elements.
 	    }
 	  }, {
 	    key: "adjustVector",
@@ -573,7 +588,7 @@
 	    key: "generateToolBar",
 	    value: function generateToolBar() {
 	      var toolBar = new createjs.Shape();
-	      toolBar.graphics.beginFill("Black").drawRect(0, 0, 420, 60).endFill();
+	      toolBar.graphics.beginFill("Black").drawRect(0, 0, 480, 60).endFill();
 	      this.elements.addChild(toolBar);
 	      this.handles.update();
 	
@@ -17710,9 +17725,9 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var Field = function () {
-	  function Field(update) {
-	    var rows = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 14;
-	    var cols = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 14;
+	  function Field() {
+	    var rows = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 14;
+	    var cols = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 14;
 	
 	    _classCallCheck(this, Field);
 	
@@ -17723,7 +17738,6 @@
 	    this.towers = [];
 	    this.minions = {};
 	    this.projectiles = {};
-	    this.update = update;
 	
 	    this.activeTower = null;
 	
@@ -17735,7 +17749,7 @@
 	    this.virtualBoard = new _pathfinder2.default();
 	
 	    this.goalX = 13;
-	    this.goalY = 27;
+	    this.goalY = 31;
 	
 	    this.virtualBoard.findPath(this.goalX, this.goalY);
 	  }
@@ -17743,16 +17757,15 @@
 	  _createClass(Field, [{
 	    key: "addMinion",
 	    value: function addMinion(minion) {
+	      var name = "minion-" + this.minionId;
 	      minion.elements.x = 240;
 	      minion.elements.y = 0;
-	      minion.elements.name = this.minionId;
 	      minion.setPath(this.virtualBoard);
-	      this.minions[this.minionId] = minion;
+	      this.minions[name] = minion;
+	      minion.elements.name = name;
+	      console.log(this.minions);
 	
 	      this.elements.addChild(minion.elements);
-	
-	      this.update();
-	
 	      this.minionId++;
 	    }
 	  }, {
@@ -17761,7 +17774,6 @@
 	      var field = this.fieldSprite();
 	      field.name = "field";
 	      this.elements.addChild(field);
-	      this.update();
 	    }
 	  }, {
 	    key: "fieldSprite",
@@ -17795,26 +17807,19 @@
 	        if (_this2.minions[key].health < 0) {
 	          _this2.killMinion(key);
 	        } else {
-	          _this2.setMinionPath(_this2.minions[key]);
+	          _this2.setMinionPath(key);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "setMinionPath",
-	    value: function setMinionPath(minion) {
+	    value: function setMinionPath(minionId) {
+	      var minion = this.minions[minionId];
 	
-	      // let startX = this.fieldToGrid(minion.elements.x);
-	      // let startY = this.fieldToGrid(minion.elements.y);
-	      //
-	      // let endX = this.goalX;
-	      // let endY = this.goalY;
-	      //   // console.log(startX, startY, endX, endY);
-	      //
-	      // const path = this.virtualBoard.getPathToCoord(startX, startY, endX, endY);
-	      //
-	      // minion.setPath(path);
-	
-	      minion.moveMinion();
+	      if (!minion.moveMinion()) {
+	        console.log("A minion reached the end with " + minion.health + " hp");
+	        this.killMinion(minionId);
+	      }
 	    }
 	  }, {
 	    key: "killMinion",
@@ -17833,20 +17838,28 @@
 	
 	      projectiles.forEach(function (key) {
 	        if (_this3.projectiles[key].adjustVector()) {
-	          _this3.projectiles[key].deleteProjectile();
-	          delete _this3.projectiles[key];
+	          _this3.removeProjectile(key);
 	        }
 	      });
+	    }
+	  }, {
+	    key: "removeProjectile",
+	    value: function removeProjectile(projectileId) {
+	      var projectileEl = this.elements.getChildByName(projectileId);
+	      this.projectiles[projectileId].deleteProjectile();
+	      this.elements.removeChild(projectileEl);
+	      delete this.projectiles[projectileId];
 	    }
 	  }, {
 	    key: "createProjectile",
 	    value: function createProjectile(projectile) {
 	      // if(Object.values(this.projectiles).length > 0)
 	      //   return;
-	      this.projectiles[this.projectileId] = projectile;
+	      var name = "proj-" + this.projectileId;
+	      this.projectiles[name] = projectile;
+	      projectile.elements.name = name;
 	      this.elements.addChild(projectile.elements);
 	
-	      this.update();
 	      this.projectileId++;
 	    }
 	  }, {
@@ -17856,7 +17869,6 @@
 	      this.activeTower = tower;
 	      this.elements.addChild(this.activeTower.elements);
 	      this.elements.setChildIndex(tower, this.elements.getNumChildren() - 1);
-	      this.update();
 	    }
 	  }, {
 	    key: "placeTower",
@@ -17877,7 +17889,7 @@
 	  }, {
 	    key: "fieldToGrid",
 	    value: function fieldToGrid(x) {
-	      x -= 30;
+	      // x -= 30;
 	      x /= 15;
 	
 	      return Math.floor(x);
@@ -17915,7 +17927,10 @@
 	    value: function validTowerPos() {
 	      var _this4 = this;
 	
-	      return !this.towers.every(function (tower) {
+	      var minionIntersect = !Object.values(this.minions).every(function (minion) {
+	        return !_this4.activeTower.intersect(minion);
+	      });
+	      return minionIntersect || !this.towers.every(function (tower) {
 	        return !_this4.activeTower.intersect(tower);
 	      });
 	    }
@@ -17936,7 +17951,6 @@
 	
 	      var newPos = this.cursorToFieldPos(x, y);
 	      this.activeTower.setPos(newPos.x, newPos.y);
-	      this.update();
 	    }
 	  }]);
 	
@@ -17966,28 +17980,44 @@
 	    this.grid = this.createGrid();
 	    this.frontier = [];
 	    this.came_from = {};
-	
-	    this.start = { x: 13, y: 0 };
-	    this.end = { x: 15, y: 27 };
 	  }
 	
 	  _createClass(PathFinder, [{
 	    key: "markWall",
 	    value: function markWall(x, y) {
 	      this.grid[y][x].markWall();
+	      for (var i = 0; i < 32; i++) {
+	        var row = this.grid[i].map(function (a) {
+	          if (a.wall) return "X";else return "-";
+	        });
+	
+	        console.log(i, row.join(""));
+	      }
 	    }
 	  }, {
 	    key: "createGrid",
 	    value: function createGrid() {
 	      var board = [];
-	      for (var i = 0; i < 28; i++) {
+	      for (var i = 0; i < 32; i++) {
 	        board[i] = [];
-	        for (var j = 0; j < 28; j++) {
+	        for (var j = 0; j < 32; j++) {
 	
 	          board[i][j] = new PathNode(j, i);
+	          if ((i === 0 || i === 31 || j === 0 || j === 31 || i === 1 || i === 30 || j === 1 || j === 30) && (j > 19 || j < 12)) {
+	            board[i][j].wall = true;
+	          }
 	        }
 	      }
-	
+	      // for(let i = 0; i < 32; i++) {
+	      //   let row = board[i].map((a) => {
+	      //     if(a.wall)
+	      //       return "X";
+	      //     else
+	      //       return "-";
+	      //   });
+	      //
+	      //   console.log(i, row.join(""));
+	      // }
 	      return board;
 	    }
 	  }, {
@@ -18017,7 +18047,7 @@
 	  }, {
 	    key: "getPathToCoord",
 	    value: function getPathToCoord(startX, startY, endX, endY) {
-	      if (!(startX >= 0 && startX < 28 && startY >= 0 && startY < 28 && endX >= 0 && endX < 28 && endY >= 0 && endY < 28)) return {};
+	      if (!(startX >= 0 && startX < 32 && startY >= 0 && startY < 32 && endX >= 0 && endX < 32 && endY >= 0 && endY < 32)) return {};
 	
 	      // this.findPath(startX, startY, endX, endY);
 	
@@ -18028,19 +18058,24 @@
 	      var path = [];
 	      var path1 = {};
 	
+	      // console.log(endCoord);
+	      // console.log(endCoord, curCoord, startCoord);
 	      return curCoord;
-	      while (curCoord !== null) {
-	        if (curCoord === undefined) return false;
 	
-	        path1[curCoord.toString()] = this.came_from[curCoord.toString()];
-	        path.push(curCoord);
-	        curCoord = this.came_from[curCoord.toString()];
-	      }
+	      // while(curCoord !== null) {
+	      //   if(curCoord === undefined)
+	      //     return false;
+	      //
+	      //
+	      //   path1[curCoord.toString()] = this.came_from[curCoord.toString()];
+	      //   path.push(curCoord)
+	      //   curCoord = this.came_from[curCoord.toString()];
+	      // }
 	
-	      // console.log(path)
+	      // console.log(curCoord);
 	
 	
-	      // for(let i = 0; i < 28; i++) {
+	      // for(let i = 0; i < 32; i++) {
 	      //   let row = this.grid[i].map((a) => {
 	      //     if(a.wall)
 	      //       return "X";
@@ -18054,7 +18089,9 @@
 	      //   console.log(i, row.join(""));
 	      // }
 	
-	      return path1;
+	      return this.came_from[endCoord.toString()];
+	
+	      // return path1;
 	    }
 	  }, {
 	    key: "neighbors",
@@ -18068,7 +18105,7 @@
 	        var newX = delta.x + el.x;
 	        var newY = delta.y + el.y;
 	
-	        if (newX >= 0 && newX < 28 && newY >= 0 && newY < 28) {
+	        if (newX >= 0 && newX < 32 && newY >= 0 && newY < 32) {
 	          var _curEl = _this2.grid[newY][newX];
 	
 	          if (!_curEl.wall && _this2.came_from[_curEl.toString()] === undefined) {
@@ -18113,7 +18150,7 @@
 /* 9 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -18129,6 +18166,7 @@
 	
 	    this.elements = this.minionSprite();
 	
+	    this.size = 15;
 	    this.health = 5000;
 	    this.speed = 1;
 	    this.path = {};
@@ -18139,34 +18177,35 @@
 	  }
 	
 	  _createClass(Minion, [{
-	    key: "killMinion",
+	    key: 'killMinion',
 	    value: function killMinion() {}
 	  }, {
-	    key: "removeMinion",
+	    key: 'removeMinion',
 	    value: function removeMinion() {}
 	  }, {
-	    key: "setPath",
+	    key: 'setPath',
 	    value: function setPath(path) {
 	      this.path = path;
 	    }
 	  }, {
-	    key: "moveMinion",
+	    key: 'moveMinion',
 	    value: function moveMinion() {
 	      var coord = this.fieldToGrid();
-	      var curPath = this.path.getPathToCoord(coord.x, coord.y, 13, 27);
-	
-	      if (curPath === null) {
-	        console.log("reached the end");
-	        return;
+	      var curPath = this.path.getPathToCoord(coord.x, coord.y, 13, 31);
+	      // console.log(curPath);
+	      if (curPath === null || curPath === undefined) {
+	        return false;
 	      }
 	
 	      if (curPath.x !== undefined && curPath.y !== undefined) this.adjustVector(curPath);
 	
 	      this.elements.y += this.vectors.y;
 	      this.elements.x += this.vectors.x;
+	
+	      return true;
 	    }
 	  }, {
-	    key: "adjustVector",
+	    key: 'adjustVector',
 	    value: function adjustVector(curPath) {
 	      var angle = this.getAngle(curPath);
 	      var rads = toRadians(angle);
@@ -18179,16 +18218,14 @@
 	      return false;
 	    }
 	  }, {
-	    key: "getAngle",
+	    key: 'getAngle',
 	    value: function getAngle(curPath) {
 	      if (curPath === undefined) return 90;
 	
-	      var targetX = curPath.x * 15 + 45;
-	      var targetY = curPath.y * 15 + 45;
-	      var projX = this.elements.x + 7.5;
-	      var projY = this.elements.y + 7.5;
-	
-	      // console.log(targetX, targetY);
+	      var targetX = curPath.x * 15 + 7.5;
+	      var targetY = curPath.y * 15 + 7.5;
+	      var projX = this.elements.x;
+	      var projY = this.elements.y;
 	
 	      var dX = targetX - projX;
 	      var dY = targetY - projY;
@@ -18200,7 +18237,7 @@
 	      return angle;
 	    }
 	  }, {
-	    key: "minionSprite",
+	    key: 'minionSprite',
 	    value: function minionSprite() {
 	      var data = {
 	        images: ['./assets/minion.png'],
@@ -18215,12 +18252,12 @@
 	      return minion;
 	    }
 	  }, {
-	    key: "fieldToGrid",
+	    key: 'fieldToGrid',
 	    value: function fieldToGrid() {
-	      var x = this.elements.x - 30;
+	      var x = this.elements.x;
 	      x /= 15;
 	
-	      var y = this.elements.y - 30;
+	      var y = this.elements.y;
 	      y /= 15;
 	
 	      return {
