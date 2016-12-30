@@ -18177,12 +18177,6 @@
 	  }
 	
 	  _createClass(Minion, [{
-	    key: 'killMinion',
-	    value: function killMinion() {}
-	  }, {
-	    key: 'removeMinion',
-	    value: function removeMinion() {}
-	  }, {
 	    key: 'setPath',
 	    value: function setPath(path) {
 	      this.path = path;
