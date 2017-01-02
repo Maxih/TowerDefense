@@ -111,20 +111,18 @@
 	    this.money = 100;
 	    this.lives = 20;
 	
-	    this.field = this.generateField();
-	    this.toolbox = this.generateToolBar();
-	
 	    this.waves = Util.classicWaves();
 	    this.stageNum = 1;
+	
+	    this.field = this.generateField();
+	    this.toolbox = this.generateToolBar();
 	  }
 	
 	  _createClass(Board, [{
 	    key: "addMinions",
 	    value: function addMinions() {
 	      var wave = this.waves[this.stageNum];
-	      console.log(wave);
 	      for (var i = 0; i < wave.minions; i++) {
-	        console.log("wave");
 	        var minion = new _minion2.default(wave.stats);
 	        this.field.createMinion(minion);
 	      }
@@ -138,12 +136,12 @@
 	      this.field.rotateTurrets();
 	      this.field.moveProjectiles();
 	      this.updateMoney();
+	      this.updateWaves();
 	
 	      var time = new Date().getTime();
 	      var wave = this.waves[this.stageNum];
 	      if (wave !== undefined) {
 	        if (this.lastSpawn + wave.time < time) {
-	          console.log("sending out wave");
 	          this.addMinions();
 	          this.lastSpawn = time;
 	        }
@@ -159,22 +157,30 @@
 	      field.minionKilled = this.minionKilled.bind(this);
 	      field.minionReachedEnd = this.minionReachedEnd.bind(this);
 	
+	      field.elements.on("click", this.placeTower.bind(this));
+	
 	      this.stage.addChild(field.elements);
 	
 	      return field;
 	    }
 	  }, {
+	    key: "placeTower",
+	    value: function placeTower() {
+	      var cost = this.field.placeTower();
+	      if (cost) {
+	        this.money -= cost;
+	      }
+	    }
+	  }, {
 	    key: "minionKilled",
 	    value: function minionKilled(reward) {
 	      this.money += reward;
-	      console.log("Dead");
 	    }
 	  }, {
 	    key: "minionReachedEnd",
 	    value: function minionReachedEnd() {
 	      this.lives -= 1;
 	      this.updateLives();
-	      console.log("lost live");
 	    }
 	  }, {
 	    key: "generateToolBox",
@@ -196,21 +202,51 @@
 	      this.stage.update();
 	    }
 	  }, {
-	    key: "newTower",
-	    value: function newTower(e) {
-	      var tower = new _tower2.default({ rateOfFire: 500, radius: 100, numTargets: 1 });
+	    key: "newDefaultTower",
+	    value: function newDefaultTower() {
+	      var tower = new _tower2.default({
+	        turretSprite: './assets/basicturret.png',
+	        rateOfFire: 1500,
+	        radius: 100,
+	        damage: 5,
+	        numTargets: 1,
+	        cost: 5
+	      });
+	
 	      if (tower.options.cost <= this.money) {
 	        this.field.newTower(tower);
-	        this.money -= tower.options.cost;
+	      }
+	    }
+	  }, {
+	    key: "newFastTower",
+	    value: function newFastTower(e) {
+	      var tower = new _tower2.default({
+	        turretSprite: './assets/turret.png',
+	        rateOfFire: 500,
+	        radius: 100,
+	        damage: 10,
+	        numTargets: 1,
+	        cost: 15
+	      });
+	
+	      if (tower.options.cost <= this.money) {
+	        this.field.newTower(tower);
 	      }
 	    }
 	  }, {
 	    key: "newGroundAttackTower",
 	    value: function newGroundAttackTower(e) {
-	      var tower = new _tower2.default({ rateOfFire: 1000, radius: 50, numTargets: 0, turretSprite: './assets/groundattackturret.png' });
+	      var tower = new _tower2.default({
+	        turretSprite: './assets/groundattackturret.png',
+	        rateOfFire: 1000,
+	        radius: 50,
+	        damage: 50,
+	        numTargets: 0,
+	        cost: 200
+	      });
+	
 	      if (tower.options.cost <= this.money) {
 	        this.field.newTower(tower);
-	        this.money -= tower.options.cost;
 	      }
 	    }
 	  }, {
@@ -236,10 +272,12 @@
 	  }, {
 	    key: "generateToolItems",
 	    value: function generateToolItems() {
-	      this.newTowerButton();
+	      this.newDefaultTowerButton();
+	      this.newFastTowerButton();
 	      this.newGroundAttackTowerButton();
 	      this.moneyCounter();
 	      this.livesCounter();
+	      this.nextWave();
 	    }
 	  }, {
 	    key: "moneyCounter",
@@ -278,13 +316,41 @@
 	      toolBar.addChild(livesBox, livesBoxLabel);
 	    }
 	  }, {
-	    key: "newTowerButton",
-	    value: function newTowerButton() {
+	    key: "nextWave",
+	    value: function nextWave() {
+	      var waveBox = new createjs.Text("" + this.lives, "20px Arial", "LightBlue");
+	      var waveBoxLabel = new createjs.Text("Next wave", "20px Arial", "LightBlue");
+	
+	      var toolBar = this.stage.getChildByName("toolbar");
+	
+	      waveBox.name = "next-wave";
+	      waveBox.textBaseline = "alphabetic";
+	      waveBox.x = 270;
+	      waveBox.y = 45;
+	
+	      waveBoxLabel.x = 260;
+	      waveBoxLabel.y = 5;
+	
+	      toolBar.addChild(waveBox, waveBoxLabel);
+	    }
+	  }, {
+	    key: "newDefaultTowerButton",
+	    value: function newDefaultTowerButton() {
 	      var addTowerButton = new createjs.Shape();
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
-	      addTowerButton.graphics.beginFill("Purple").drawRect(15, 15, 30, 30).endFill();
-	      addTowerButton.on("click", this.newTower.bind(this));
+	      addTowerButton.graphics.beginFill("Orange").drawRect(15, 15, 30, 30).endFill();
+	      addTowerButton.on("click", this.newDefaultTower.bind(this));
+	      toolBar.addChild(addTowerButton);
+	    }
+	  }, {
+	    key: "newFastTowerButton",
+	    value: function newFastTowerButton() {
+	      var addTowerButton = new createjs.Shape();
+	      var toolBar = this.stage.getChildByName("toolbar");
+	
+	      addTowerButton.graphics.beginFill("Purple").drawRect(60, 15, 30, 30).endFill();
+	      addTowerButton.on("click", this.newFastTower.bind(this));
 	      toolBar.addChild(addTowerButton);
 	    }
 	  }, {
@@ -293,7 +359,7 @@
 	      var addTowerButton = new createjs.Shape();
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
-	      addTowerButton.graphics.beginFill("Green").drawRect(60, 15, 30, 30).endFill();
+	      addTowerButton.graphics.beginFill("Green").drawRect(105, 15, 30, 30).endFill();
 	      addTowerButton.on("click", this.newGroundAttackTower.bind(this));
 	      toolBar.addChild(addTowerButton);
 	    }
@@ -316,6 +382,18 @@
 	      if (livesBox.text != this.lives) {
 	        livesBox.text = this.lives;
 	      }
+	    }
+	  }, {
+	    key: "updateWaves",
+	    value: function updateWaves() {
+	      var toolBar = this.stage.getChildByName("toolbar");
+	      var waveBox = toolBar.getChildByName("next-wave");
+	      var wave = this.waves[this.stageNum];
+	
+	      if (wave === undefined) return;
+	
+	      var time = new Date().getTime();
+	      waveBox.text = ((wave.time - (time - this.lastSpawn)) / 1000).toFixed(1);
 	    }
 	  }]);
 	
@@ -570,7 +648,7 @@
 	      this.elements.setChildIndex(explosion, 0);
 	
 	      minions.forEach(function (minion) {
-	        minion.health -= _this3.options.damage;
+	        minion.damageMinion(_this3.options.damage);
 	      });
 	    }
 	  }, {
@@ -776,7 +854,7 @@
 	      this.elements.x += vector.x * this.speed;
 	
 	      if (this.intersects(this.target)) {
-	        this.target.health -= this.damage;
+	        this.target.damageMinion(this.damage);
 	        return true;
 	      }
 	
@@ -846,8 +924,6 @@
 	
 	    this.elements = new createjs.Container();
 	
-	    this.elements.on("click", this.placeTower.bind(this));
-	
 	    this.towers = [];
 	    this.minions = {};
 	    this.projectiles = {};
@@ -858,6 +934,7 @@
 	
 	    this.minionId = 0;
 	    this.projectileId = 0;
+	    this.towerId = 0;
 	
 	    this.virtualBoard = new _pathfinder2.default();
 	
@@ -906,7 +983,7 @@
 	      var minions = Object.keys(this.minions);
 	
 	      minions.forEach(function (key) {
-	        if (_this2.minions[key].health < 0) {
+	        if (_this2.minions[key].health <= 0) {
 	          _this2.minionKilled(_this2.killMinion(key));
 	        } else {
 	          _this2.setMinionPath(key);
@@ -990,6 +1067,16 @@
 	  }, {
 	    key: "newTower",
 	    value: function newTower(tower) {
+	      var name = "tower-" + this.towerId;
+	      tower.elements.name = name;
+	      this.towerId++;
+	
+	      if (this.activeTower !== null) {
+	        var towerEl = this.elements.getChildByName(this.activeTower.elements.name);
+	        this.elements.removeChild(towerEl);
+	        this.activeTower = null;
+	      }
+	
 	      tower.createProjectile = this.createProjectile.bind(this);
 	      this.activeTower = tower;
 	      this.elements.addChild(this.activeTower.elements);
@@ -997,10 +1084,10 @@
 	    }
 	  }, {
 	    key: "placeTower",
-	    value: function placeTower(x, y) {
-	      if (this.activeTower === null) return;
+	    value: function placeTower() {
+	      if (this.activeTower === null) return false;
 	
-	      if (this.validTowerPos()) return;
+	      if (this.validTowerPos()) return false;
 	
 	      var virtualBoardCopy = this.virtualBoard.dupBoard();
 	
@@ -1013,13 +1100,15 @@
 	
 	      if (virtualBoardCopy.getPathToCoord(16, 0, this.goalX, this.goalY) === undefined) {
 	        console.log("Blocking");
-	        return;
+	        return false;
 	      } else {
+	        var cost = this.activeTower.options.cost;
 	        this.virtualBoard = virtualBoardCopy;
 	        this.activeTower.activate();
 	
 	        this.towers.push(this.activeTower);
 	        this.activeTower = null;
+	        return cost;
 	      }
 	    }
 	  }, {
@@ -1335,8 +1424,11 @@
 	    _this.elements = _this.minionSprite();
 	
 	    _this.health = _this.options.health;
+	    _this.baseHealth = _this.options.health;
 	    _this.speed = _this.options.speed;
 	    _this.path = {};
+	
+	    _this.drawHealth();
 	    return _this;
 	  }
 	
@@ -1348,7 +1440,6 @@
 	  }, {
 	    key: "moveMinion",
 	    value: function moveMinion(target) {
-	
 	      if (target === null || target === undefined) {
 	        return false;
 	      }
@@ -1369,6 +1460,28 @@
 	      return true;
 	    }
 	  }, {
+	    key: "drawHealth",
+	    value: function drawHealth() {
+	      var healthPercent = this.health / this.baseHealth;
+	      var healthAngle = healthPercent * 2 * Math.PI;
+	      var healthCircle = this.elements.getChildByName("health");
+	
+	      healthCircle.graphics.clear().beginFill("Green").arc(0, 0, 9, 0, healthAngle).closePath();
+	      healthCircle.regX = -7.5;
+	      healthCircle.regY = -7.5;
+	
+	      this.elements.setChildIndex(healthCircle, 1);
+	    }
+	  }, {
+	    key: "damageMinion",
+	    value: function damageMinion(damage) {
+	      this.health -= damage;
+	
+	      this.drawHealth();
+	
+	      return this.health;
+	    }
+	  }, {
 	    key: "minionSprite",
 	    value: function minionSprite() {
 	      var data = {
@@ -1378,10 +1491,23 @@
 	      var spriteSheet = new createjs.SpriteSheet(data);
 	      var minion = new createjs.Sprite(spriteSheet);
 	
-	      minion.regX = 15 / 2;
-	      minion.regY = 15 / 2;
+	      var minionContainer = new createjs.Container();
+	      var healthCircle = new createjs.Shape();
+	      var redCircle = new createjs.Shape();
 	
-	      return minion;
+	      redCircle.graphics.beginFill("Red").drawCircle(0, 0, 9).endFill();
+	
+	      healthCircle.name = "health";
+	
+	      redCircle.regX = -7.5;
+	      redCircle.regY = -7.5;
+	      minionContainer.regX = 15 / 2;
+	      minionContainer.regY = 15 / 2;
+	
+	      minionContainer.addChild(minion, healthCircle, redCircle);
+	      minionContainer.setChildIndex(redCircle, 0);
+	
+	      return minionContainer;
 	    }
 	  }]);
 	
@@ -4517,7 +4643,7 @@
 	      minions: 15,
 	      stats: {
 	        speed: 0.75,
-	        health: 75,
+	        health: 50,
 	        reward: 10
 	      }
 	    },
@@ -4527,7 +4653,7 @@
 	      stats: {
 	        speed: 0.75,
 	        health: 125,
-	        reward: 11
+	        reward: 10
 	      }
 	    },
 	    3: {
@@ -4536,7 +4662,7 @@
 	      stats: {
 	        speed: 0.75,
 	        health: 125,
-	        reward: 13
+	        reward: 10
 	      }
 	    },
 	    4: {
