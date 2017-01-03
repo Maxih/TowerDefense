@@ -1,0 +1,8 @@
+@font-face {
+  font-family: 'Pixel';
+  src: url('../assets/fonts/Pixel Emulator.otf');
+}
+
+.game {
+  border-radius: 3px;
+}

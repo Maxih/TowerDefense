@@ -119,6 +119,9 @@
 	  }
 	
 	  _createClass(Board, [{
+	    key: "toggleGame",
+	    value: function toggleGame() {}
+	  }, {
 	    key: "addMinions",
 	    value: function addMinions() {
 	      var wave = this.waves[this.stageNum];
@@ -132,10 +135,11 @@
 	    key: "updateField",
 	    value: function updateField() {
 	      this.field.checkValidTower();
+	      this.updateMoney();
+	
 	      this.field.moveMinions();
 	      this.field.rotateTurrets();
 	      this.field.moveProjectiles();
-	      this.updateMoney();
 	      this.updateWaves();
 	
 	      var time = new Date().getTime();
@@ -202,54 +206,6 @@
 	      this.stage.update();
 	    }
 	  }, {
-	    key: "newDefaultTower",
-	    value: function newDefaultTower() {
-	      var tower = new _tower2.default({
-	        turretSprite: './assets/basicturret.png',
-	        rateOfFire: 1500,
-	        radius: 100,
-	        damage: 5,
-	        numTargets: 1,
-	        cost: 5
-	      });
-	
-	      if (tower.options.cost <= this.money) {
-	        this.field.newTower(tower);
-	      }
-	    }
-	  }, {
-	    key: "newFastTower",
-	    value: function newFastTower(e) {
-	      var tower = new _tower2.default({
-	        turretSprite: './assets/turret.png',
-	        rateOfFire: 500,
-	        radius: 100,
-	        damage: 10,
-	        numTargets: 1,
-	        cost: 15
-	      });
-	
-	      if (tower.options.cost <= this.money) {
-	        this.field.newTower(tower);
-	      }
-	    }
-	  }, {
-	    key: "newGroundAttackTower",
-	    value: function newGroundAttackTower(e) {
-	      var tower = new _tower2.default({
-	        turretSprite: './assets/groundattackturret.png',
-	        rateOfFire: 1000,
-	        radius: 50,
-	        damage: 50,
-	        numTargets: 0,
-	        cost: 200
-	      });
-	
-	      if (tower.options.cost <= this.money) {
-	        this.field.newTower(tower);
-	      }
-	    }
-	  }, {
 	    key: "mouseMove",
 	    value: function mouseMove(e) {
 	      this.field.mouseMove(e);
@@ -258,11 +214,14 @@
 	    key: "generateToolBar",
 	    value: function generateToolBar() {
 	      var toolBarContainer = new createjs.Container();
-	      var toolBarWrapper = new createjs.Shape();
-	
 	      toolBarContainer.name = "toolbar";
 	
-	      toolBarWrapper.graphics.beginFill("Black").drawRect(0, 0, 480, 60).endFill();
+	      var data = {
+	        images: ['./assets/toolbar.png'],
+	        frames: { width: 480, height: 60 }
+	      };
+	      var spriteSheet = new createjs.SpriteSheet(data);
+	      var toolBarWrapper = new createjs.Sprite(spriteSheet);
 	
 	      toolBarContainer.addChild(toolBarWrapper);
 	      this.stage.addChild(toolBarContainer);
@@ -272,9 +231,36 @@
 	  }, {
 	    key: "generateToolItems",
 	    value: function generateToolItems() {
-	      this.newDefaultTowerButton();
-	      this.newFastTowerButton();
-	      this.newGroundAttackTowerButton();
+	      var defaultTowerOptions = {
+	        turretSprite: './assets/basicturret.png',
+	        rateOfFire: 1500,
+	        radius: 100,
+	        damage: 5,
+	        numTargets: 1,
+	        cost: 5
+	      };
+	      this.newTowerButton(defaultTowerOptions, 15);
+	
+	      var fastTowerOptions = {
+	        turretSprite: './assets/turret.png',
+	        rateOfFire: 500,
+	        radius: 100,
+	        damage: 10,
+	        numTargets: 1,
+	        cost: 15
+	      };
+	      this.newTowerButton(fastTowerOptions, 60);
+	
+	      var groundTowerOptions = {
+	        turretSprite: './assets/groundattackturret.png',
+	        rateOfFire: 1000,
+	        radius: 50,
+	        damage: 50,
+	        numTargets: 0,
+	        cost: 200
+	      };
+	      this.newTowerButton(groundTowerOptions, 105);
+	
 	      this.moneyCounter();
 	      this.livesCounter();
 	      this.nextWave();
@@ -282,86 +268,125 @@
 	  }, {
 	    key: "moneyCounter",
 	    value: function moneyCounter() {
-	      var moneyBox = new createjs.Text("" + this.money, "20px Arial", "Yellow");
-	      var moneyBoxLabel = new createjs.Text("Bank", "20px Arial", "Yellow");
+	      var data = {
+	        images: ['./assets/coin.png'],
+	        frames: { width: 15, height: 15 }
+	      };
+	      var spriteSheet = new createjs.SpriteSheet(data);
+	      var moneyBoxLabel = new createjs.Sprite(spriteSheet);
+	
+	      var moneyBox = new createjs.Text("" + this.money, "15px Pixel", "Yellow");
 	
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
 	      moneyBox.name = "money-box";
 	      moneyBox.textBaseline = "alphabetic";
 	      moneyBox.x = 420;
-	      moneyBox.y = 45;
+	      moneyBox.y = 23;
 	
-	      moneyBoxLabel.x = 415;
-	      moneyBoxLabel.y = 5;
+	      moneyBoxLabel.x = 400;
+	      moneyBoxLabel.y = 10;
 	
 	      toolBar.addChild(moneyBox, moneyBoxLabel);
 	    }
 	  }, {
 	    key: "livesCounter",
 	    value: function livesCounter() {
-	      var livesBox = new createjs.Text("" + this.lives, "20px Arial", "LightBlue");
-	      var livesBoxLabel = new createjs.Text("Lives", "20px Arial", "LightBlue");
+	      var data = {
+	        images: ['./assets/lives.png'],
+	        frames: { width: 17, height: 15 }
+	      };
+	      var spriteSheet = new createjs.SpriteSheet(data);
+	      var livesBoxLabel = new createjs.Sprite(spriteSheet);
 	
+	      var livesBox = new createjs.Text("" + this.lives, "15px Pixel", "Red");
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
 	      livesBox.name = "lives-box";
 	      livesBox.textBaseline = "alphabetic";
-	      livesBox.x = 360;
-	      livesBox.y = 45;
+	      livesBox.x = 420;
+	      livesBox.y = 41;
 	
-	      livesBoxLabel.x = 350;
-	      livesBoxLabel.y = 5;
+	      livesBoxLabel.x = 399;
+	      livesBoxLabel.y = 28;
 	
 	      toolBar.addChild(livesBox, livesBoxLabel);
 	    }
 	  }, {
 	    key: "nextWave",
 	    value: function nextWave() {
-	      var waveBox = new createjs.Text("" + this.lives, "20px Arial", "LightBlue");
-	      var waveBoxLabel = new createjs.Text("Next wave", "20px Arial", "LightBlue");
+	      var waveBox = new createjs.Shape();
+	      var waveBoxLabel = new createjs.Shape();
 	
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
 	      waveBox.name = "next-wave";
-	      waveBox.textBaseline = "alphabetic";
-	      waveBox.x = 270;
-	      waveBox.y = 45;
 	
-	      waveBoxLabel.x = 260;
-	      waveBoxLabel.y = 5;
+	      waveBoxLabel.graphics.beginFill("Black").drawRect(0, 58, 480, 2).endFill();
+	      waveBox.graphics.beginFill("Yellow").drawRect(0, 58, 480, 2).endFill();
 	
-	      toolBar.addChild(waveBox, waveBoxLabel);
+	      toolBar.addChild(waveBoxLabel, waveBox);
 	    }
 	  }, {
-	    key: "newDefaultTowerButton",
-	    value: function newDefaultTowerButton() {
-	      var addTowerButton = new createjs.Shape();
+	    key: "newTowerButton",
+	    value: function newTowerButton(options, offset) {
 	      var toolBar = this.stage.getChildByName("toolbar");
 	
-	      addTowerButton.graphics.beginFill("Orange").drawRect(15, 15, 30, 30).endFill();
-	      addTowerButton.on("click", this.newDefaultTower.bind(this));
-	      toolBar.addChild(addTowerButton);
+	      var tower = new createjs.Container();
+	      var data = {
+	        images: ['./assets/tower.png'],
+	        frames: { width: 30, height: 30, count: 3, spacing: 0, margin: 0 },
+	        animations: {
+	          base: {
+	            frames: [0]
+	          },
+	          valid: {
+	            frames: [1]
+	          },
+	          invalid: {
+	            frames: [2]
+	          }
+	        }
+	      };
+	      var spriteSheet = new createjs.SpriteSheet(data);
+	      var towerButton = new createjs.Sprite(spriteSheet);
+	
+	      var turretData = {
+	        images: [options.turretSprite],
+	        frames: { width: 30, height: 30 }
+	      };
+	      var turretSpriteSheet = new createjs.SpriteSheet(turretData);
+	      var turret = new createjs.Sprite(turretSpriteSheet);
+	
+	      tower.on("click", this.newTower.bind(this, options));
+	      tower.on("mouseover", this.colorTower.bind(this, towerButton, options.cost));
+	      tower.on("mouseout", this.decolorTower.bind(this, towerButton));
+	
+	      tower.addChild(towerButton, turret);
+	
+	      tower.y = 15;
+	      tower.x = offset;
+	      tower.cursor = "pointer";
+	
+	      toolBar.addChild(tower);
 	    }
 	  }, {
-	    key: "newFastTowerButton",
-	    value: function newFastTowerButton() {
-	      var addTowerButton = new createjs.Shape();
-	      var toolBar = this.stage.getChildByName("toolbar");
-	
-	      addTowerButton.graphics.beginFill("Purple").drawRect(60, 15, 30, 30).endFill();
-	      addTowerButton.on("click", this.newFastTower.bind(this));
-	      toolBar.addChild(addTowerButton);
+	    key: "newTower",
+	    value: function newTower(options) {
+	      if (options.cost <= this.money) {
+	        var tower = new _tower2.default(options);
+	        this.field.newTower(tower);
+	      }
 	    }
 	  }, {
-	    key: "newGroundAttackTowerButton",
-	    value: function newGroundAttackTowerButton() {
-	      var addTowerButton = new createjs.Shape();
-	      var toolBar = this.stage.getChildByName("toolbar");
-	
-	      addTowerButton.graphics.beginFill("Green").drawRect(105, 15, 30, 30).endFill();
-	      addTowerButton.on("click", this.newGroundAttackTower.bind(this));
-	      toolBar.addChild(addTowerButton);
+	    key: "colorTower",
+	    value: function colorTower(tower, cost) {
+	      if (cost <= this.money) tower.gotoAndPlay("valid");else tower.gotoAndPlay("invalid");
+	    }
+	  }, {
+	    key: "decolorTower",
+	    value: function decolorTower(tower) {
+	      tower.gotoAndPlay("base");
 	    }
 	  }, {
 	    key: "updateMoney",
@@ -393,7 +418,9 @@
 	      if (wave === undefined) return;
 	
 	      var time = new Date().getTime();
-	      waveBox.text = ((wave.time - (time - this.lastSpawn)) / 1000).toFixed(1);
+	      var timePercent = 1 - (time - this.lastSpawn) / wave.time;
+	      var barWidth = 480 * timePercent;
+	      waveBox.graphics.clear().beginFill("Yellow").drawRect(0, 58, barWidth, 2).endFill();
 	    }
 	  }]);
 	
@@ -465,6 +492,8 @@
 	    _this.elements = _this.towerContainer();
 	    _this.createProjectile = createProjectile;
 	    // this.drawTurret();
+	
+	    _this.revealRadius();
 	    return _this;
 	  }
 	
@@ -476,33 +505,53 @@
 	  }, {
 	    key: "towerContainer",
 	    value: function towerContainer() {
-	      var tower = new createjs.Container();
+	      var towerContainer = new createjs.Container();
 	
-	      var ghost = new createjs.Shape();
-	      ghost.name = "ghost";
-	      ghost.regX = 15;
-	      ghost.regY = 15;
-	
+	      var tower = this.towerSprite();
+	      var turret = this.turretSprite();
 	      var radius = new createjs.Shape();
+	
+	      towerContainer.cursor = "pointer";
+	
+	      turret.regX = this.options.width / 2;
+	      turret.regY = this.options.height / 2;
+	
+	      tower.regX = this.options.width / 2;
+	      tower.regY = this.options.height / 2;
+	
+	      radius.regX = this.options.width / 2;
+	      radius.regY = this.options.height / 2;
+	
+	      tower.name = "tower";
+	      turret.name = "turret";
 	      radius.name = "radius";
-	      radius.regX = 15;
-	      radius.regY = 15;
 	
-	      tower.mouseChildren = false;
+	      towerContainer.mouseChildren = false;
 	
-	      tower.on("mouseover", this.revealRadius.bind(this));
-	      tower.on("mouseout", this.hideRadius.bind(this));
+	      towerContainer.on("click", this.revealRadius.bind(this));
+	      towerContainer.on("mouseout", this.hideRadius.bind(this));
 	
-	      tower.addChild(ghost, radius);
+	      towerContainer.addChild(tower, turret, radius);
 	
-	      return tower;
+	      return towerContainer;
 	    }
 	  }, {
 	    key: "towerSprite",
 	    value: function towerSprite() {
 	      var data = {
 	        images: ['./assets/tower.png'],
-	        frames: { width: 30, height: 30 }
+	        frames: { width: 30, height: 30, count: 3, spacing: 0, margin: 0 },
+	        animations: {
+	          base: {
+	            frames: [0]
+	          },
+	          valid: {
+	            frames: [1]
+	          },
+	          invalid: {
+	            frames: [2]
+	          }
+	        }
 	      };
 	      var spriteSheet = new createjs.SpriteSheet(data);
 	      var tower = new createjs.Sprite(spriteSheet);
@@ -524,16 +573,14 @@
 	  }, {
 	    key: "drawValidTower",
 	    value: function drawValidTower() {
-	      var tower = this.elements.getChildByName("ghost");
-	
-	      tower.graphics.clear().beginFill("#76c476").beginStroke("#3e8a3e").setStrokeStyle(1).drawRect(0, 0, 30, 30).endStroke().endFill();
+	      var tower = this.elements.getChildByName("tower");
+	      tower.gotoAndPlay("valid");
 	    }
 	  }, {
 	    key: "drawInValidTower",
 	    value: function drawInValidTower() {
-	      var tower = this.elements.getChildByName("ghost");
-	
-	      tower.graphics.clear().beginFill("#b13f3f").beginStroke("#c47676").setStrokeStyle(1).drawRect(0, 0, 30, 30).endStroke().endFill();
+	      var tower = this.elements.getChildByName("tower");
+	      tower.gotoAndPlay("invalid");
 	    }
 	  }, {
 	    key: "drawRadius",
@@ -721,23 +768,8 @@
 	    key: "activate",
 	    value: function activate() {
 	      this.active = true;
-	
-	      var tower = this.towerSprite();
-	      var turret = this.turretSprite();
-	
-	      turret.regX = 15;
-	      turret.regY = 15;
-	
-	      tower.regX = this.options.width / 2;
-	      tower.regY = this.options.height / 2;
-	
-	      tower.name = "tower";
-	      turret.name = "turret";
-	
-	      this.elements.addChild(tower, turret);
-	
-	      var ghost = this.elements.getChildByName("ghost");
-	      ghost.graphics.clear();
+	      var tower = this.elements.getChildByName("tower");
+	      tower.gotoAndPlay("base");
 	    }
 	  }]);
 	
@@ -924,7 +956,7 @@
 	
 	    this.elements = new createjs.Container();
 	
-	    this.towers = [];
+	    this.towers = {};
 	    this.minions = {};
 	    this.projectiles = {};
 	
@@ -945,9 +977,51 @@
 	
 	    this.minionKilled = function () {};
 	    this.minionReachedEnd = function () {};
+	
+	    this.elements.on("click", this.selectTower.bind(this));
+	    this.elements.on("mouseover", this.showRadius.bind(this));
 	  }
 	
 	  _createClass(Field, [{
+	    key: "selectTower",
+	    value: function selectTower(e) {
+	      if (e.target.name === null) {
+	        return;
+	      }
+	
+	      if (e.target.name.substring(0, 5) === "tower") {
+	        var tower = this.towers[e.target.name];
+	
+	        if (tower === undefined) return;
+	
+	        tower.drawValidTower();
+	        if (this.activeTower !== null) {
+	          if (!this.activeTower.active) return;else this.activeTower.activate();
+	        }
+	
+	        this.activeTower = tower;
+	      } else {
+	        if (this.activeTower !== null) {
+	          if (this.activeTower.active) this.activeTower.activate();
+	
+	          this.activeTower = null;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "showRadius",
+	    value: function showRadius(e) {
+	      if (e.target.name === null) return;
+	
+	      if (e.target.name.substring(0, 5) === "tower") {
+	        var tower = this.towers[e.target.name];
+	
+	        if (tower === undefined) return;
+	
+	        this.towers[e.target.name].drawRadius();
+	      }
+	    }
+	  }, {
 	    key: "generateField",
 	    value: function generateField() {
 	      var field = this.fieldSprite();
@@ -971,7 +1045,7 @@
 	    value: function rotateTurrets() {
 	      var _this = this;
 	
-	      this.towers.forEach(function (tower) {
+	      Object.values(this.towers).forEach(function (tower) {
 	        tower.targetMinion(_this.minions);
 	      });
 	    }
@@ -1072,8 +1146,12 @@
 	      this.towerId++;
 	
 	      if (this.activeTower !== null) {
-	        var towerEl = this.elements.getChildByName(this.activeTower.elements.name);
-	        this.elements.removeChild(towerEl);
+	        if (!this.activeTower.active) {
+	          var towerEl = this.elements.getChildByName(this.activeTower.elements.name);
+	          this.elements.removeChild(towerEl);
+	        } else {
+	          this.activeTower.activate();
+	        }
 	        this.activeTower = null;
 	      }
 	
@@ -1106,7 +1184,7 @@
 	        this.virtualBoard = virtualBoardCopy;
 	        this.activeTower.activate();
 	
-	        this.towers.push(this.activeTower);
+	        this.towers[this.activeTower.elements.name] = this.activeTower;
 	        this.activeTower = null;
 	        return cost;
 	      }
@@ -1124,6 +1202,8 @@
 	    value: function checkValidTower() {
 	      if (this.activeTower === null) return;
 	
+	      if (this.activeTower.active) return;
+	
 	      if (this.validTowerPos()) {
 	        this.activeTower.invalidPosition();
 	      } else {
@@ -1138,7 +1218,7 @@
 	      var minionIntersect = !Object.values(this.minions).every(function (minion) {
 	        return !_this4.activeTower.intersects(minion);
 	      });
-	      return minionIntersect || !this.towers.every(function (tower) {
+	      return minionIntersect || !Object.values(this.towers).every(function (tower) {
 	        return !_this4.activeTower.intersects(tower);
 	      });
 	    }
@@ -1149,6 +1229,8 @@
 	      var y = e.stageY - this.elements.y;
 	
 	      if (this.activeTower === null) return;
+	
+	      if (this.activeTower.active) return;
 	
 	      var newPos = Util.cursorToFieldPos(x, y);
 	      this.activeTower.setPos(newPos.x, newPos.y);
