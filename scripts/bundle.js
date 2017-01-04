@@ -70,8 +70,6 @@
 	  function TowerDefense(stage) {
 	    _classCallCheck(this, TowerDefense);
 	
-	    this.num = 0;
-	
 	    this.stage = stage;
 	    this.board = null;
 	
@@ -104,11 +102,9 @@
 	      this.stage.removeAllChildren();
 	      delete this.board;
 	      this.board = null;
-	      this.board = new _board2.default(this.stage, this.num);
+	      this.board = new _board2.default(this.stage);
 	      this.board.onLose = this.displayLose.bind(this);
 	      this.board.onWin = this.displayWin.bind(this);
-	
-	      this.num++;
 	    }
 	  }, {
 	    key: "displayLose",
@@ -176,7 +172,7 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var Board = function () {
-	  function Board(stage, test) {
+	  function Board(stage) {
 	    _classCallCheck(this, Board);
 	
 	    this.stage = stage;
@@ -965,6 +961,8 @@
 	
 	        if (_this4.options.bulletSprite) options["sprite"] = _this4.options.bulletSprite;
 	
+	        if (_this4.options.explosionSprite) options["explosionSprite"] = _this4.options.explosionSprite;
+	
 	        var projectile = new _projectile2.default(options);
 	        projectile.elements.x = _this4.elements.x;
 	        projectile.elements.y = _this4.elements.y;
@@ -1063,6 +1061,7 @@
 	
 	var defaults = {
 	  sprite: './assets/plasma2.png',
+	  explosionSprite: './assets/plasmaexplosion.png',
 	  target: {},
 	  speed: 1,
 	  damage: 10,
@@ -1103,14 +1102,23 @@
 	    key: "explosionSprite",
 	    value: function explosionSprite(callback) {
 	      var data = {
-	        images: ['./assets/explosion.png'],
-	        frames: { width: 32, height: 32, count: 16, regX: 16, regY: 16, spacing: 0, margin: 0 },
+	        images: [this.options.explosionSprite],
+	        frames: { width: 30, height: 30, count: 14, regX: 15, regY: 15, spacing: 0, margin: 0 },
 	        animations: {
-	          animate: [0, 15, "animate", .5]
+	          animate: [0, 14, "animate", .5]
 	        }
 	      };
 	      var spriteSheet = new createjs.SpriteSheet(data);
 	      var explosion = new createjs.Sprite(spriteSheet, "animate");
+	
+	      var targetCoord = {
+	        x: this.options.target.elements.x,
+	        y: this.options.target.elements.y
+	      };
+	
+	      var angle = this.getAngleTo(targetCoord);
+	
+	      explosion.rotation = angle;
 	
 	      explosion.addEventListener("animationend", callback);
 	
@@ -5082,6 +5090,7 @@
 	var BASE_TOWER = exports.BASE_TOWER = {
 	  turretSprite: './assets/basicturret.png',
 	  bulletSprite: './assets/bullet.png',
+	  explosionSprite: './assets/bulletexplosion.png',
 	  levels: {
 	    1: {
 	      rateOfFire: 1500,
@@ -5121,6 +5130,7 @@
 	var FAST_TOWER = exports.FAST_TOWER = {
 	  turretSprite: './assets/turret.png',
 	  bulletSprite: './assets/plasma2.png',
+	  explosionSprite: './assets/plasmaexplosion.png',
 	  levels: {
 	    1: {
 	      rateOfFire: 500,
