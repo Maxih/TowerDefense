@@ -215,9 +215,15 @@
 	
 	      for (var i = 0; i < wave.minions; i++) {
 	        var minion = new _minion2.default(wave.stats);
-	        this.field.createMinion(minion);
+	        var spawnTime = Math.random() * 5000;
+	        setTimeout(this.minionTimeout.bind(this, minion), spawnTime);
 	      }
 	      this.stageNum++;
+	    }
+	  }, {
+	    key: "minionTimeout",
+	    value: function minionTimeout(minion) {
+	      this.field.createMinion(minion);
 	    }
 	  }, {
 	    key: "updateField",
@@ -351,6 +357,7 @@
 	      this.newTowerButton(TowerUtil.BASE_TOWER, 130);
 	      this.newTowerButton(TowerUtil.FAST_TOWER, 175);
 	      this.newTowerButton(TowerUtil.GROUND_TOWER, 220);
+	      this.newTowerButton(TowerUtil.FREEZE_TOWER, 265);
 	
 	      this.moneyCounter();
 	      this.livesCounter();
@@ -365,7 +372,7 @@
 	      var towerInfo = new createjs.Text("", "15px Pixel", "#F1F1F1");
 	
 	      towerInfo.name = "tower-info";
-	      towerInfo.x = 310;
+	      towerInfo.x = 355;
 	      towerInfo.y = 5;
 	
 	      this.toolbar.addChild(towerInfo);
@@ -434,7 +441,7 @@
 	
 	      upgradeArrow.on("click", this.upgradeTower.bind(this));
 	
-	      upgradeArrow.x = 265;
+	      upgradeArrow.x = 310;
 	      upgradeArrow.y = 15;
 	      upgradeArrow.cursor = "pointer";
 	      upgradeArrow.name = "upgrade";
@@ -587,7 +594,8 @@
 	
 	      if (this.field.activeTower !== null) {
 	        var towerOptions = this.field.activeTower.towerOptions();
-	        towerInfo.text = towerOptions.damage.toFixed(1) + " - Damage\n" + (towerOptions.rateOfFire / 1000).toFixed(1) + "  - Fire Rate\n" + towerOptions.cost.toFixed(1) + " - Cost";
+	        var upgradeCost = this.field.activeTower.upgradeCost();
+	        towerInfo.text = "DMG: " + towerOptions.damage.toFixed(1) + "\nROF: " + (towerOptions.rateOfFire / 1000).toFixed(1) + "\n$$$: " + upgradeCost;
 	      } else towerInfo.text = "";
 	    }
 	  }, {
@@ -918,12 +926,10 @@
 	  }, {
 	    key: "groundAttack",
 	    value: function groundAttack(minions) {
-	      var _this3 = this;
-	
 	      if (minions.length === 0) return;
 	
 	      var data = {
-	        images: ['./assets/groundattack.png'],
+	        images: [this.options.explosionSprite],
 	        frames: { width: 100, height: 100, count: 6, regX: 50, regY: 50, spacing: 0, margin: 0 },
 	        animations: {
 	          animate: [0, 6, "animate", .5]
@@ -937,8 +943,11 @@
 	      this.elements.addChild(explosion);
 	      this.elements.setChildIndex(explosion, 0);
 	
+	      var towerOptions = this.options.levels[this.level];
+	
 	      minions.forEach(function (minion) {
-	        minion.damageMinion(_this3.options.levels[_this3.level].damage);
+	        minion.damageMinion(towerOptions.damage);
+	        minion.slowMinion(towerOptions.slowMult, towerOptions.slowLength, towerOptions.slowChance);
 	      });
 	    }
 	  }, {
@@ -950,23 +959,23 @@
 	  }, {
 	    key: "shootTurret",
 	    value: function shootTurret(minions) {
-	      var _this4 = this;
+	      var _this3 = this;
 	
 	      minions.forEach(function (minion) {
 	        var options = {
 	          target: minion,
 	          speed: 5,
-	          damage: _this4.options.levels[_this4.level].damage
+	          damage: _this3.options.levels[_this3.level].damage
 	        };
 	
-	        if (_this4.options.bulletSprite) options["sprite"] = _this4.options.bulletSprite;
+	        if (_this3.options.bulletSprite) options["sprite"] = _this3.options.bulletSprite;
 	
-	        if (_this4.options.explosionSprite) options["explosionSprite"] = _this4.options.explosionSprite;
+	        if (_this3.options.explosionSprite) options["explosionSprite"] = _this3.options.explosionSprite;
 	
 	        var projectile = new _projectile2.default(options);
-	        projectile.elements.x = _this4.elements.x;
-	        projectile.elements.y = _this4.elements.y;
-	        _this4.createProjectile(projectile);
+	        projectile.elements.x = _this3.elements.x;
+	        projectile.elements.y = _this3.elements.y;
+	        _this3.createProjectile(projectile);
 	      });
 	    }
 	  }, {
@@ -1776,7 +1785,8 @@
 	  health: 100,
 	  reward: 10,
 	  height: 15,
-	  width: 15
+	  width: 15,
+	  speedMult: 2
 	};
 	
 	var Minion = function (_GameObject) {
@@ -1795,6 +1805,13 @@
 	    _this.baseHealth = _this.options.health;
 	    _this.speed = _this.options.speed;
 	    _this.path = {};
+	
+	    _this.speedDelay = 1500;
+	
+	    _this.lastVector = {};
+	    _this.lastVectorChange = 0;
+	
+	    _this.slowEffects = null;
 	
 	    _this.drawHealth();
 	    return _this;
@@ -1820,10 +1837,41 @@
 	      var angle = this.getAngleTo(targetCoord);
 	      var vector = this.getVectorOf(angle);
 	
+	      var speed = this.speed;
+	      var time = new Date().getTime();
+	
+	      var speedRatio = this.speed + (time - this.lastVectorChange) / this.speedDelay * this.options.speedMult;
+	
+	      if (speedRatio < this.options.speedMult + this.speed) {
+	        speed *= speedRatio;
+	      } else {
+	        speed *= this.options.speedMult + this.speed;
+	      }
+	
+	      var roundedX = vector.x.toFixed(2);
+	      var roundedY = vector.y.toFixed(2);
+	
+	      if (this.lastVector.x !== roundedX && this.lastVector.y !== roundedY) {
+	        this.lastVectorChange = time;
+	      }
+	
+	      this.lastVector = {
+	        x: roundedX,
+	        y: roundedY
+	      };
+	
+	      if (this.slowEffects !== null) {
+	        if (this.slowEffects.length > time) {
+	          speed *= this.slowEffects.mult;
+	        } else {
+	          this.removeSlow();
+	        }
+	      }
+	
 	      this.elements.rotation = angle - 90;
 	
-	      this.elements.y += vector.y * this.speed;
-	      this.elements.x += vector.x * this.speed;
+	      this.elements.y += vector.y * speed;
+	      this.elements.x += vector.x * speed;
 	
 	      return true;
 	    }
@@ -1848,6 +1896,37 @@
 	      this.drawHealth();
 	
 	      return this.health;
+	    }
+	  }, {
+	    key: "slowMinion",
+	    value: function slowMinion(mult, length, chance) {
+	      var num = Math.random();
+	      if (num <= chance) {
+	        console.log("minionFrozen");
+	        this.slowEffects = {
+	          length: new Date().getTime() + length,
+	          mult: mult
+	        };
+	        var slowCircle = new createjs.Shape();
+	
+	        slowCircle.graphics.beginFill("LightBlue").drawCircle(0, 0, 10).endFill();
+	        slowCircle.name = "slow-circle";
+	
+	        slowCircle.regX = -7.5;
+	        slowCircle.regY = -7.5;
+	
+	        this.elements.addChild(slowCircle);
+	        this.elements.setChildIndex(slowCircle, 0);
+	      }
+	    }
+	  }, {
+	    key: "removeSlow",
+	    value: function removeSlow() {
+	      this.slowEffects = null;
+	
+	      var slowCircle = this.elements.getChildByName("slow-circle");
+	
+	      if (slowCircle) this.elements.removeChild(slowCircle);
 	    }
 	  }, {
 	    key: "minionSprite",
@@ -5018,22 +5097,22 @@
 	    minions: 20,
 	    stats: {
 	      speed: 0.75,
-	      health: 125,
+	      health: 75,
 	      reward: 10
 	    }
 	  },
 	  3: {
 	    time: 15000,
-	    minions: 25,
+	    minions: 30,
 	    stats: {
 	      speed: 0.75,
-	      health: 125,
+	      health: 100,
 	      reward: 10
 	    }
 	  },
 	  4: {
 	    time: 15000,
-	    minions: 25,
+	    minions: 30,
 	    stats: {
 	      speed: 0.75,
 	      health: 150,
@@ -5051,11 +5130,11 @@
 	  },
 	  6: {
 	    time: 15000,
-	    minions: 30,
+	    minions: 15,
 	    stats: {
 	      speed: 0.75,
-	      health: 500,
-	      reward: 15
+	      health: 1000,
+	      reward: 20
 	    }
 	  },
 	  7: {
@@ -5064,7 +5143,7 @@
 	    stats: {
 	      speed: 0.75,
 	      health: 600,
-	      reward: 15
+	      reward: 10
 	    }
 	  },
 	  8: {
@@ -5072,8 +5151,35 @@
 	    minions: 30,
 	    stats: {
 	      speed: 0.75,
-	      health: 1000,
+	      health: 1200,
 	      reward: 15
+	    }
+	  },
+	  9: {
+	    time: 15000,
+	    minions: 30,
+	    stats: {
+	      speed: 0.75,
+	      health: 1800,
+	      reward: 20
+	    }
+	  },
+	  10: {
+	    time: 15000,
+	    minions: 30,
+	    stats: {
+	      speed: 0.75,
+	      health: 2400,
+	      reward: 10
+	    }
+	  },
+	  11: {
+	    time: 15000,
+	    minions: 15,
+	    stats: {
+	      speed: 0.75,
+	      health: 5000,
+	      reward: 30
 	    }
 	  }
 	};
@@ -5095,7 +5201,7 @@
 	    1: {
 	      rateOfFire: 1500,
 	      radius: 50,
-	      damage: 5,
+	      damage: 25,
 	      numTargets: 1,
 	      cost: 5,
 	      animation: "level-1"
@@ -5103,7 +5209,7 @@
 	    2: {
 	      rateOfFire: 1500,
 	      radius: 75,
-	      damage: 15,
+	      damage: 50,
 	      numTargets: 1,
 	      cost: 15,
 	      animation: "level-2"
@@ -5111,7 +5217,7 @@
 	    3: {
 	      rateOfFire: 1500,
 	      radius: 100,
-	      damage: 50,
+	      damage: 100,
 	      numTargets: 1,
 	      cost: 50,
 	      animation: "level-3"
@@ -5119,8 +5225,8 @@
 	    4: {
 	      rateOfFire: 1500,
 	      radius: 200,
-	      damage: 200,
-	      numTargets: 1,
+	      damage: 250,
+	      numTargets: 2,
 	      cost: 100,
 	      animation: "level-4"
 	    }
@@ -5135,7 +5241,7 @@
 	    1: {
 	      rateOfFire: 500,
 	      radius: 75,
-	      damage: 10,
+	      damage: 15,
 	      numTargets: 1,
 	      cost: 15,
 	      animation: "level-1"
@@ -5143,7 +5249,7 @@
 	    2: {
 	      rateOfFire: 500,
 	      radius: 90,
-	      damage: 20,
+	      damage: 50,
 	      numTargets: 1,
 	      cost: 30,
 	      animation: "level-2"
@@ -5151,7 +5257,7 @@
 	    3: {
 	      rateOfFire: 500,
 	      radius: 100,
-	      damage: 50,
+	      damage: 150,
 	      numTargets: 1,
 	      cost: 60,
 	      animation: "level-3"
@@ -5159,9 +5265,9 @@
 	    4: {
 	      rateOfFire: 500,
 	      radius: 110,
-	      damage: 100,
+	      damage: 300,
 	      numTargets: 1,
-	      cost: 150,
+	      cost: 200,
 	      animation: "level-4"
 	    }
 	  }
@@ -5169,37 +5275,101 @@
 	
 	var GROUND_TOWER = exports.GROUND_TOWER = {
 	  turretSprite: './assets/groundattackturret.png',
+	  explosionSprite: './assets/groundattack.png',
 	  levels: {
 	    1: {
-	      rateOfFire: 2000,
-	      radius: 50,
-	      damage: 50,
-	      numTargets: 0,
-	      cost: 100,
-	      animation: "level-1"
-	    },
-	    2: {
 	      rateOfFire: 2000,
 	      radius: 50,
 	      damage: 100,
 	      numTargets: 0,
 	      cost: 200,
+	      slowMult: 1,
+	      slowLength: 0,
+	      slowChance: 0,
+	      animation: "level-1"
+	    },
+	    2: {
+	      rateOfFire: 2000,
+	      radius: 50,
+	      damage: 200,
+	      numTargets: 0,
+	      cost: 200,
+	      slowMult: 1,
+	      slowLength: 0,
+	      slowChance: 0,
 	      animation: "level-2"
 	    },
 	    3: {
 	      rateOfFire: 1500,
 	      radius: 50,
-	      damage: 200,
+	      damage: 300,
 	      numTargets: 0,
 	      cost: 300,
+	      slowMult: 1,
+	      slowLength: 0,
+	      slowChance: 0,
 	      animation: "level-3"
 	    },
 	    4: {
 	      rateOfFire: 1500,
 	      radius: 50,
-	      damage: 400,
+	      damage: 500,
 	      numTargets: 0,
 	      cost: 400,
+	      slowMult: 1,
+	      slowLength: 0,
+	      slowChance: 0,
+	      animation: "level-4"
+	    }
+	  }
+	};
+	
+	var FREEZE_TOWER = exports.FREEZE_TOWER = {
+	  turretSprite: './assets/freezetower.png',
+	  explosionSprite: './assets/freezeattack.png',
+	  levels: {
+	    1: {
+	      rateOfFire: 2000,
+	      radius: 50,
+	      damage: 10,
+	      numTargets: 0,
+	      cost: 50,
+	      slowMult: .2,
+	      slowLength: 1000,
+	      slowChance: .3,
+	      animation: "level-1"
+	    },
+	    2: {
+	      rateOfFire: 2000,
+	      radius: 50,
+	      damage: 10,
+	      numTargets: 0,
+	      cost: 75,
+	      slowMult: .1,
+	      slowLength: 1500,
+	      slowChance: .4,
+	      animation: "level-2"
+	    },
+	    3: {
+	      rateOfFire: 2000,
+	      radius: 50,
+	      damage: 10,
+	      numTargets: 0,
+	      cost: 150,
+	      slowMult: .05,
+	      slowLength: 2000,
+	      slowChance: .5,
+	      animation: "level-3"
+	    },
+	    4: {
+	      rateOfFire: 2000,
+	      radius: 50,
+	      damage: 10,
+	      numTargets: 0,
+	      cost: 200,
+	      slowMult: 0,
+	      slowLength: 2500,
+	      slowChance: .6,
 	      animation: "level-4"
 	    }
 	  }
