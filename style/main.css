@@ -1,0 +1,100 @@
+@font-face {
+  font-family: 'Pixel';
+  src: url('../assets/fonts/Pixel Emulator.otf');
+}
+
+body {
+  background: #111;
+}
+
+.reset-button {
+  font-family: Arial;
+  font-size: 12px;
+  display: block;
+  background: #bdad3f;
+  color: #F1F1F1;
+  font-family: "Pixel";
+  border: 1px solid #000;
+  padding: 8px;
+  border-radius: 3px;
+  text-align: center;
+  width: 125px;
+  margin: 0px auto 20px auto;
+}
+
+.reset-button:hover {
+  background: #e0d8a3;
+}
+
+.reset-button:hover {
+  cursor: pointer;
+}
+
+.game {
+  border-radius: 3px;
+  background: #000;
+  border: 1px solid #000;
+}
+
+.game-wrapper {
+  width: 480px;
+  margin: 0 auto;
+}
+
+.page-wrapper {
+  font-family: "Pixel";
+}
+
+.game-instructions {
+  color: #F1F1F1;
+  font-size: 11px;
+  margin-top: 35px;
+  font-family: Arial;
+  background: #222;
+  padding: 15px;
+  border-radius: 3px;
+}
+
+h1 {
+  font-size: 50px;
+  color: #F1F1F1;
+  text-align: center;
+  padding: 20px 0px;
+  margin: 0;
+}
+
+.tower-stats table {
+  width: 100%;
+}
+
+.tower-stats th {
+  background: #08515a;
+  padding: 5px;
+  text-align: center;
+}
+
+.tower-stats td {
+  width: 20%;
+  text-align: center;
+}
+
+.tower-stats {
+  margin-bottom: 20px;
+}
+
+.tower-desc {
+  margin: 10px 0px;
+}
+
+.tower-name {
+  font-size: 15px;
+}
+
+.tower-desc {
+  font-size: 10px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
