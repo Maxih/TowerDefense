@@ -1570,7 +1570,7 @@
 	
 	    this.grid = grid || this.createGrid();
 	    this.frontier = [];
-	    this.came_from = {};
+	    this.cameFrom = {};
 	    this.updated = false;
 	  }
 	
@@ -1627,16 +1627,6 @@
 	          }
 	        }
 	      }
-	      // for(let i = 0; i < 32; i++) {
-	      //   let row = board[i].map((a) => {
-	      //     if(a.wall)
-	      //       return "X";
-	      //     else
-	      //       return "-";
-	      //   });
-	      //
-	      //   console.log(i, row.join(""));
-	      // }
 	      return board;
 	    }
 	  }, {
@@ -1645,16 +1635,16 @@
 	      var _this = this;
 	
 	      var startEl = this.grid[endY][endX];
-	      this.came_from = {};
+	      this.cameFrom = {};
 	      this.frontier.push(startEl);
-	      this.came_from[startEl.toString()] = null;
+	      this.cameFrom[startEl.toString()] = null;
 	
 	      var _loop = function _loop() {
 	        var curEl = _this.frontier.shift(1);
 	        var next = _this.neighbors(curEl);
 	
 	        next.forEach(function (el) {
-	          _this.came_from[el.toString()] = curEl;
+	          _this.cameFrom[el.toString()] = curEl;
 	          _this.frontier.push(el);
 	        });
 	      };
@@ -1669,7 +1659,7 @@
 	      if (!(startX >= 0 && startX < 32 && startY >= 0 && startY < 32 && endX >= 0 && endX < 32 && endY >= 0 && endY < 32)) return { x: endX, y: endY };
 	
 	      var endCoord = this.grid[startY][startX];
-	      var curCoord = this.came_from[endCoord.toString()];
+	      var curCoord = this.cameFrom[endCoord.toString()];
 	
 	      var startCoord = curCoord;
 	      var lastOpenCoord = curCoord;
@@ -1678,15 +1668,12 @@
 	        if (curCoord === undefined) return false;
 	
 	        var isOpen = this.isHypotOpen(startCoord, curCoord);
-	        // console.log(curCoord, isOpen);
 	        if (!isOpen) {
-	          // console.log(lastOpenCoord);
-	
 	          return lastOpenCoord;
 	        } else {
 	          if (curCoord !== null) lastOpenCoord = curCoord;
 	        }
-	        curCoord = this.came_from[curCoord.toString()];
+	        curCoord = this.cameFrom[curCoord.toString()];
 	      }
 	      return lastOpenCoord;
 	    }
@@ -1721,45 +1708,10 @@
 	        } else {
 	          return false;
 	        }
-	
-	        // console.log(this.grid[endY][endX].wall);
-	        // console.log(Math.floor(startCoord.x + k), Math.floor(startCoord.y + j));
 	      }
 	
 	      return true;
 	    }
-	
-	    // getAngleTo(start, end) {
-	    //   if(end === undefined)
-	    //     return 90;
-	    //
-	    //
-	    //   const thisCenter = {
-	    //     x: start.x,
-	    //     y: start.y
-	    //   };
-	    //
-	    //   let x = end.x - thisCenter.x;
-	    //   let y = end.y - thisCenter.y;
-	    //
-	    //   let angle = Util.toDegrees( Math.atan( y / x ) );
-	    //
-	    //
-	    //   if( thisCenter.x > object.x )
-	    //     angle = angle + 180;
-	    //
-	    //   return angle;
-	    // }
-	    //
-	    // getVectorOf(angle) {
-	    //   let rads = Util.toRadians(angle);
-	    //
-	    //   return {
-	    //     x: Math.cos(rads),
-	    //     y: Math.sin(rads)
-	    //   }
-	    // }
-	
 	  }, {
 	    key: "neighbors",
 	    value: function neighbors(el) {
@@ -1775,7 +1727,7 @@
 	        if (newX >= 0 && newX < 32 && newY >= 0 && newY < 32) {
 	          var _curEl = _this2.grid[newY][newX];
 	
-	          if (!_curEl.wall && _this2.came_from[_curEl.toString()] === undefined) {
+	          if (!_curEl.wall && _this2.cameFrom[_curEl.toString()] === undefined) {
 	            elements.push(_curEl);
 	          }
 	        }
