@@ -728,9 +728,6 @@
 	
 	      towerContainer.mouseChildren = false;
 	
-	      towerContainer.on("click", this.revealRadius.bind(this));
-	      towerContainer.on("mouseout", this.hideRadius.bind(this));
-	
 	      towerContainer.addChild(tower, turret, radius, levels);
 	
 	      return towerContainer;
@@ -1032,6 +1029,7 @@
 	      this.active = true;
 	      var tower = this.elements.getChildByName("tower");
 	      tower.gotoAndPlay("base");
+	      this.hideRadius();
 	    }
 	  }]);
 	
@@ -1264,7 +1262,7 @@
 	    this.minionReachedEnd = function () {};
 	
 	    this.elements.on("click", this.selectTower.bind(this));
-	    this.elements.on("mouseover", this.showRadius.bind(this));
+	    // this.elements.on("mouseover", this.showRadius.bind(this));
 	  }
 	
 	  _createClass(Field, [{
@@ -1289,34 +1287,44 @@
 	        if (tower === undefined) return;
 	
 	        tower.drawValidTower();
+	        tower.drawRadius();
+	
 	        if (this.activeTower !== null) {
 	          if (!this.activeTower.active) return;else {
-	            if (this.activeTower.elements.name !== tower.elements.name) this.activeTower.activate();
+	            if (this.activeTower.elements.name !== tower.elements.name) {
+	              this.activeTower.activate();
+	            }
 	          }
 	        }
 	
 	        this.activeTower = tower;
 	      } else {
 	        if (this.activeTower !== null) {
-	          if (this.activeTower.active) this.activeTower.activate();
+	          if (this.activeTower.active) {
+	            this.activeTower.activate();
+	          }
 	
 	          this.activeTower = null;
 	        }
 	      }
 	    }
-	  }, {
-	    key: "showRadius",
-	    value: function showRadius(e) {
-	      if (e.target.name === null) return;
 	
-	      if (e.target.name.substring(0, 5) === "tower") {
-	        var tower = this.towers[e.target.name];
+	    // showRadius(e) {
+	    //   if(e.target.name === null)
+	    //     return;
+	    //
+	    //
+	    //   if(e.target.name.substring(0, 5) === "tower") {
+	    //     let tower = this.towers[e.target.name];
+	    //
+	    //     if(tower === undefined)
+	    //       return;
+	    //
+	    //
+	    //     this.towers[e.target.name].drawRadius();
+	    //   }
+	    // }
 	
-	        if (tower === undefined) return;
-	
-	        this.towers[e.target.name].drawRadius();
-	      }
-	    }
 	  }, {
 	    key: "generateField",
 	    value: function generateField() {
