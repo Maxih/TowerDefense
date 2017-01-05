@@ -4,7 +4,7 @@
 }
 
 body {
-  background: #182039;
+  background: #111;
 }
 
 .reset-button {
@@ -18,8 +18,8 @@ body {
   padding: 8px;
   border-radius: 3px;
   text-align: center;
-  width: 150px;
-  margin-bottom: 40px;
+  width: 125px;
+  margin: 10px auto 40px auto;
 }
 
 .reset-button:hover {
@@ -38,19 +38,21 @@ body {
 
 .game-wrapper {
   width: 480px;
+  margin: 0 auto;
 }
 
 .page-wrapper {
-  display: flex;
   font-family: "Pixel";
 }
 
 .game-instructions {
-  flex: 1;
   color: #F1F1F1;
   font-size: 11px;
-  margin-left: 15px;
   margin-top: 35px;
+  font-family: Arial;
+  background: #222;
+  padding: 15px;
+  border-radius: 3px;
 }
 
 h1 {

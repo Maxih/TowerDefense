@@ -182,7 +182,7 @@
 	
 	    this.lastSpawn = new Date().getTime();
 	    this.money = 100;
-	    this.lives = 20;
+	    this.lives = 100;
 	
 	    this.waves = MinionUtil.CLASSIC;
 	    this.stageNum = 1;
@@ -1359,15 +1359,17 @@
 	          _this2.setMinionPath(key);
 	        }
 	      });
+	
+	      this.virtualBoard.updated = false;
 	    }
 	  }, {
 	    key: "setMinionPath",
 	    value: function setMinionPath(minionId) {
 	      var minion = this.minions[minionId];
 	      var minionCoord = minion.fieldToGrid();
-	      var minionTarget = this.virtualBoard.getPathToCoord(minionCoord.x, minionCoord.y, 15, 31);
+	      // const minionTarget = this.virtualBoard.getPathToCoord(minionCoord.x, minionCoord.y, 15, 31);
 	
-	      if (!minion.moveMinion(minionTarget)) {
+	      if (!minion.moveMinion(minionCoord.x, minionCoord.y)) {
 	        this.minionReachedEnd();
 	        this.killMinion(minionId);
 	      }
@@ -1377,7 +1379,7 @@
 	    value: function createMinion(minion) {
 	      var name = "minion-" + this.minionId;
 	
-	      minion.setPath(this.virtualBoard);
+	      minion.path = this.virtualBoard;
 	      this.minions[name] = minion;
 	      minion.elements.name = name;
 	      minion.elements.x = 180 + Math.random() * 120;
@@ -1472,12 +1474,15 @@
 	
 	      virtualBoardCopy.findPath(this.goalX, this.goalY);
 	
-	      if (virtualBoardCopy.getPathToCoord(16, 0, this.goalX, this.goalY) === undefined) {
+	      var testPath = virtualBoardCopy.getPathToCoord(16, 0, this.goalX, this.goalY);
+	      if (!testPath) {
 	        console.log("Blocking");
 	        return false;
 	      } else {
 	        var cost = this.activeTower.options.levels[1].cost;
-	        this.virtualBoard = virtualBoardCopy;
+	        this.virtualBoard.updated = true;
+	        this.virtualBoard.grid = virtualBoardCopy.grid;
+	        this.virtualBoard.findPath(this.goalX, this.goalY);
 	        this.activeTower.active = true;
 	
 	        this.towers[this.activeTower.elements.name] = this.activeTower;
@@ -1558,6 +1563,7 @@
 	    this.grid = grid || this.createGrid();
 	    this.frontier = [];
 	    this.came_from = {};
+	    this.updated = false;
 	  }
 	
 	  _createClass(PathFinder, [{
@@ -1654,50 +1660,98 @@
 	    value: function getPathToCoord(startX, startY, endX, endY) {
 	      if (!(startX >= 0 && startX < 32 && startY >= 0 && startY < 32 && endX >= 0 && endX < 32 && endY >= 0 && endY < 32)) return { x: endX, y: endY };
 	
-	      // this.findPath(startX, startY, endX, endY);
-	
-	
-	      var startCoord = this.grid[endY][endX];
 	      var endCoord = this.grid[startY][startX];
 	      var curCoord = this.came_from[endCoord.toString()];
-	      var path = [];
-	      var path1 = {};
 	
-	      // console.log(endCoord);
-	      // console.log(endCoord, curCoord, startCoord);
-	      return curCoord;
+	      var startCoord = curCoord;
+	      var lastOpenCoord = curCoord;
 	
-	      // while(curCoord !== null) {
-	      //   if(curCoord === undefined)
-	      //     return false;
-	      //
-	      //
-	      //   path1[curCoord.toString()] = this.came_from[curCoord.toString()];
-	      //   path.push(curCoord)
-	      //   curCoord = this.came_from[curCoord.toString()];
-	      // }
+	      while (curCoord !== null) {
+	        if (curCoord === undefined) return false;
 	
-	      // console.log(curCoord);
+	        var isOpen = this.isHypotOpen(startCoord, curCoord);
+	        // console.log(curCoord, isOpen);
+	        if (!isOpen) {
+	          // console.log(lastOpenCoord);
 	
-	
-	      // for(let i = 0; i < 32; i++) {
-	      //   let row = this.grid[i].map((a) => {
-	      //     if(a.wall)
-	      //       return "X";
-	      //     else if(path1[a.toString()] !== undefined) {
-	      //       return "P";
-	      //     }
-	      //     else
-	      //       return "-";
-	      //   });
-	      //
-	      //   console.log(i, row.join(""));
-	      // }
-	
-	      return this.came_from[endCoord.toString()];
-	
-	      // return path1;
+	          return lastOpenCoord;
+	        } else {
+	          if (curCoord !== null) lastOpenCoord = curCoord;
+	        }
+	        curCoord = this.came_from[curCoord.toString()];
+	      }
+	      return lastOpenCoord;
 	    }
+	  }, {
+	    key: "isHypotOpen",
+	    value: function isHypotOpen(startCoord, endCoord) {
+	      // straight line
+	      if (startCoord.x === endCoord.x || startCoord.y === endCoord.y) return true;
+	
+	      var x = endCoord.x - startCoord.x;
+	      var y = endCoord.y - startCoord.y;
+	
+	      var m = y / x;
+	
+	      for (var i = 0; i < Math.abs(y); i++) {
+	
+	        var j = y < 0 ? 0 - i : i;
+	        var l = y < 0 ? 0 - i - 1 : i + 1;
+	        var k = j === 0 ? 0 : Math.floor(m / j);
+	        var n = l === 0 ? 0 : Math.floor(m / l);
+	
+	        var endX = startCoord.x + k;
+	        var endY = startCoord.y + j;
+	
+	        var endX2 = startCoord.x + n;
+	        var endY2 = startCoord.y + l;
+	
+	        if (endX >= 0 && endX < 32 && endY >= 0 && endY < 32 && endX2 >= 0 && endX2 < 32 && endY2 >= 0 && endY2 < 32) {
+	          if (this.grid[endY][endX].wall || this.grid[endY][endX2].wall || this.grid[endY2][endX].wall || this.grid[endY2][endX2].wall) {
+	            return false;
+	          }
+	        } else {
+	          return false;
+	        }
+	
+	        // console.log(this.grid[endY][endX].wall);
+	        // console.log(Math.floor(startCoord.x + k), Math.floor(startCoord.y + j));
+	      }
+	
+	      return true;
+	    }
+	
+	    // getAngleTo(start, end) {
+	    //   if(end === undefined)
+	    //     return 90;
+	    //
+	    //
+	    //   const thisCenter = {
+	    //     x: start.x,
+	    //     y: start.y
+	    //   };
+	    //
+	    //   let x = end.x - thisCenter.x;
+	    //   let y = end.y - thisCenter.y;
+	    //
+	    //   let angle = Util.toDegrees( Math.atan( y / x ) );
+	    //
+	    //
+	    //   if( thisCenter.x > object.x )
+	    //     angle = angle + 180;
+	    //
+	    //   return angle;
+	    // }
+	    //
+	    // getVectorOf(angle) {
+	    //   let rads = Util.toRadians(angle);
+	    //
+	    //   return {
+	    //     x: Math.cos(rads),
+	    //     y: Math.sin(rads)
+	    //   }
+	    // }
+	
 	  }, {
 	    key: "neighbors",
 	    value: function neighbors(el) {
@@ -1804,12 +1858,16 @@
 	    _this.health = _this.options.health;
 	    _this.baseHealth = _this.options.health;
 	    _this.speed = _this.options.speed;
-	    _this.path = {};
+	    _this.targetCoord = null;
 	
 	    _this.speedDelay = 1500;
 	
 	    _this.lastVector = {};
 	    _this.lastVectorChange = 0;
+	
+	    _this.lastAngle = 0;
+	    _this.lastAngleChange = 0;
+	    _this.path = {};
 	
 	    _this.slowEffects = null;
 	
@@ -1818,16 +1876,25 @@
 	  }
 	
 	  _createClass(Minion, [{
-	    key: "setPath",
-	    value: function setPath(path) {
-	      this.path = path;
-	    }
-	  }, {
 	    key: "moveMinion",
-	    value: function moveMinion(target) {
-	      if (target === null || target === undefined) {
-	        return false;
+	    value: function moveMinion(x, y) {
+	
+	      var target = void 0;
+	
+	      if (this.path.updated || !this.targetCoord) {
+	        this.targetCoord = this.path.getPathToCoord(x, y, 15, 31);
 	      }
+	
+	      if (!this.targetCoord) return false;
+	
+	      if (this.targetCoord.x === x && this.targetCoord.y === y || y < 1) {
+	        this.targetCoord = this.path.getPathToCoord(x, y, 15, 31);
+	        // console.log(this.targetCoord);
+	      }
+	
+	      if (!this.targetCoord) return false;
+	
+	      target = this.targetCoord;
 	
 	      var targetCoord = {
 	        x: target.x * 15 + 7.5,
@@ -1840,7 +1907,7 @@
 	      var speed = this.speed;
 	      var time = new Date().getTime();
 	
-	      var speedRatio = this.speed + (time - this.lastVectorChange) / this.speedDelay * this.options.speedMult;
+	      var speedRatio = this.speed + (time - this.lastAngleChange) / this.speedDelay * this.options.speedMult;
 	
 	      if (speedRatio < this.options.speedMult + this.speed) {
 	        speed *= speedRatio;
@@ -1848,17 +1915,13 @@
 	        speed *= this.options.speedMult + this.speed;
 	      }
 	
-	      var roundedX = vector.x.toFixed(2);
-	      var roundedY = vector.y.toFixed(2);
+	      var angleChange = Math.abs(this.lastAngle - angle);
 	
-	      if (this.lastVector.x !== roundedX && this.lastVector.y !== roundedY) {
-	        this.lastVectorChange = time;
+	      if (angleChange > 45) {
+	        this.lastAngleChange = time;
 	      }
 	
-	      this.lastVector = {
-	        x: roundedX,
-	        y: roundedY
-	      };
+	      this.lastAngle = angle;
 	
 	      if (this.slowEffects !== null) {
 	        if (this.slowEffects.length > time) {
@@ -1902,15 +1965,15 @@
 	    value: function slowMinion(mult, length, chance) {
 	      var num = Math.random();
 	      if (num <= chance) {
-	        console.log("minionFrozen");
-	        this.slowEffects = {
-	          length: new Date().getTime() + length,
-	          mult: mult
-	        };
 	        var slowCircle = new createjs.Shape();
 	
+	        this.slowEffects = {
+	          length: new Date().getTime() + length,
+	          mult: mult,
+	          circle: slowCircle
+	        };
+	
 	        slowCircle.graphics.beginFill("LightBlue").drawCircle(0, 0, 10).endFill();
-	        slowCircle.name = "slow-circle";
 	
 	        slowCircle.regX = -7.5;
 	        slowCircle.regY = -7.5;
@@ -1922,11 +1985,10 @@
 	  }, {
 	    key: "removeSlow",
 	    value: function removeSlow() {
-	      this.slowEffects = null;
-	
-	      var slowCircle = this.elements.getChildByName("slow-circle");
-	
-	      if (slowCircle) this.elements.removeChild(slowCircle);
+	      if (this.slowEffects) {
+	        this.elements.removeChild(this.slowEffects.circle);
+	        this.slowEffects = null;
+	      }
 	    }
 	  }, {
 	    key: "minionSprite",
@@ -5087,7 +5149,7 @@
 	    time: 0,
 	    minions: 15,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 50,
 	      reward: 10
 	    }
@@ -5096,7 +5158,7 @@
 	    time: 15000,
 	    minions: 20,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 75,
 	      reward: 10
 	    }
@@ -5105,7 +5167,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 100,
 	      reward: 10
 	    }
@@ -5114,7 +5176,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 150,
 	      reward: 15
 	    }
@@ -5123,7 +5185,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 300,
 	      reward: 10
 	    }
@@ -5132,7 +5194,7 @@
 	    time: 15000,
 	    minions: 15,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 1000,
 	      reward: 20
 	    }
@@ -5141,7 +5203,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 600,
 	      reward: 10
 	    }
@@ -5150,7 +5212,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 1200,
 	      reward: 15
 	    }
@@ -5159,7 +5221,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 1800,
 	      reward: 20
 	    }
@@ -5168,7 +5230,7 @@
 	    time: 15000,
 	    minions: 30,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 2400,
 	      reward: 10
 	    }
@@ -5177,7 +5239,7 @@
 	    time: 15000,
 	    minions: 15,
 	    stats: {
-	      speed: 0.75,
+	      speed: 0.5,
 	      health: 5000,
 	      reward: 30
 	    }
@@ -5209,21 +5271,21 @@
 	    2: {
 	      rateOfFire: 1500,
 	      radius: 75,
-	      damage: 50,
+	      damage: 75,
 	      numTargets: 1,
 	      cost: 15,
 	      animation: "level-2"
 	    },
 	    3: {
-	      rateOfFire: 1500,
+	      rateOfFire: 1000,
 	      radius: 100,
-	      damage: 100,
+	      damage: 150,
 	      numTargets: 1,
 	      cost: 50,
 	      animation: "level-3"
 	    },
 	    4: {
-	      rateOfFire: 1500,
+	      rateOfFire: 1000,
 	      radius: 200,
 	      damage: 250,
 	      numTargets: 2,
@@ -5257,7 +5319,7 @@
 	    3: {
 	      rateOfFire: 500,
 	      radius: 100,
-	      damage: 150,
+	      damage: 100,
 	      numTargets: 1,
 	      cost: 60,
 	      animation: "level-3"

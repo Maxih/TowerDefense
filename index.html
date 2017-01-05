@@ -11,92 +11,200 @@
   <section class="page-wrapper">
     <section class="game-wrapper">
       <h1>Tower Defense</h1>
-      <canvas class="game" id="tower-defense" width="480" height="540"></canvas>
-    </section>
-    <aside class="game-instructions">
       <span class="reset-button">Restart</span>
 
-      <h2>Instructions</h2>
-      <ul>
-        <li>Build a maze of towers</li>
-        <li>Towers attack minions</li>
-        <li>Lives are lost when minions reach the end</li>
-        <li>Get money for killing minions</li>
-        <li>Upgrade towers to improve their specs</li>
-      </ul>
+      <canvas class="game" id="tower-defense" width="480" height="540"></canvas>
+      <aside class="game-instructions">
 
-      <h2>Tower Types</h2>
+        <h2>Instructions</h2>
+        <ul>
+          <li>Build a maze of towers to damage and guide minions</li>
+          <li>Minions move faster in straight lines</li>
+          <li>Lives are lost when minions reach the end</li>
+          <li>Get money for killing minions</li>
+          <li>Upgrade towers to improve their specs</li>
+        </ul>
 
-      <ul class="tower-types">
-        <li>
-          <div class="tower-name">Gaurd Tower</div>
-          <div class="tower-desc">Cheap towers useful for guiding minions. Upgrades to have a large range and powerful shots</div>
-          <div class="tower-stats">
-            <table>
-              <tr>
-                <th>Level</th>
-                <th>Damage</th>
-                <th>Cost</th>
-                <th>Fire Rate</th>
-                <th>Range</th>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>4</td>
-              </td>
-            </table>
-          </div>
-        </li>
-        <li>
-          <div class="tower-name">Fast Tower</div>
-          <div class="tower-desc">Fast shooting towers useful for focusing damage on a single minion at a time</div>
-          <div class="tower-stats">
-            <table>
-              <tr>
-                <th>Level</th>
-                <th>Damage</th>
-                <th>Cost</th>
-                <th>Fire Rate</th>
-                <th>Range</th>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>4</td>
-              </td>
-            </table>
-          </div>
-        </li>
+        <h2>Tower Types</h2>
 
-        <li>
-          <div class="tower-name">Bash Tower</div>
-          <div class="tower-desc">Slow firing tower with a small range. Deals heavy damage to all minions within range, useful for clearing swarms</div>
-          <div class="tower-stats">
-            <table>
-              <tr>
-                <th>Level</th>
-                <th>Damage</th>
-                <th>Cost</th>
-                <th>Fire Rate</th>
-                <th>Range</th>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>4</td>
-              </td>
-            </table>
-          </div>
-        </li>
-      </ul>
-    </aside>
+        <ul class="tower-types">
+          <li>
+            <div class="tower-name">Gaurd Tower</div>
+            <div class="tower-desc">Cheap towers useful for guiding minions. Upgrades to have a large range and powerful shots. Final upgrade fires 2 bullets</div>
+            <div class="tower-stats">
+              <table>
+                <tr>
+                  <th>Level</th>
+                  <th>Damage</th>
+                  <th>Cost</th>
+                  <th>Fire Rate</th>
+                  <th>Range</th>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>25</td>
+                  <td>5</td>
+                  <td>1.5s</td>
+                  <td>50</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>75</td>
+                  <td>15</td>
+                  <td>1.5s</td>
+                  <td>75</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>150</td>
+                  <td>50</td>
+                  <td>1s</td>
+                  <td>100</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>250</td>
+                  <td>100</td>
+                  <td>1s</td>
+                  <td>200</td>
+                </tr>
+              </table>
+            </div>
+          </li>
+          <li>
+            <div class="tower-name">Fast Tower</div>
+            <div class="tower-desc">Fast shooting towers useful for focusing damage on a single minion at a time</div>
+            <div class="tower-stats">
+              <table>
+                <tr>
+                  <th>Level</th>
+                  <th>Damage</th>
+                  <th>Cost</th>
+                  <th>Fire Rate</th>
+                  <th>Range</th>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>15</td>
+                  <td>15</td>
+                  <td>.5s</td>
+                  <td>75</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>50</td>
+                  <td>30</td>
+                  <td>.5s</td>
+                  <td>90</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>100</td>
+                  <td>60</td>
+                  <td>.5s</td>
+                  <td>100</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>300</td>
+                  <td>200</td>
+                  <td>.5s</td>
+                  <td>110</td>
+                </tr>
+              </table>
+            </div>
+          </li>
+
+          <li>
+            <div class="tower-name">Bash Tower</div>
+            <div class="tower-desc">Slow firing tower with a small range. Deals heavy damage to all minions within range, useful for clearing swarms</div>
+            <div class="tower-stats">
+              <table>
+                <tr>
+                  <th>Level</th>
+                  <th>Damage</th>
+                  <th>Cost</th>
+                  <th>Fire Rate</th>
+                  <th>Range</th>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>100</td>
+                  <td>200</td>
+                  <td>2s</td>
+                  <td>50</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>200</td>
+                  <td>200</td>
+                  <td>2s</td>
+                  <td>50</td>
+                </td>
+                <tr>
+                  <td>3</td>
+                  <td>300</td>
+                  <td>300</td>
+                  <td>2s</td>
+                  <td>50</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>500</td>
+                  <td>400</td>
+                  <td>2s</td>
+                  <td>50</td>
+                </tr>
+              </table>
+            </div>
+          </li>
+
+          <li>
+            <div class="tower-name">Frost Tower</div>
+            <div class="tower-desc">Slow firing tower with a small range. Percent chance to freeze minions</div>
+            <div class="tower-stats">
+              <table>
+                <tr>
+                  <th>Level</th>
+                  <th>Freeze Chance</th>
+                  <th>Speed Reduction</th>
+                  <th>Freeze Duration</th>
+                  <th>Cost</th>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>30%</td>
+                  <td>80%</td>
+                  <td>1s</td>
+                  <td>50</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>40%</td>
+                  <td>90%</td>
+                  <td>1.5s</td>
+                  <td>75</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>50%</td>
+                  <td>95%</td>
+                  <td>2s</td>
+                  <td>150</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>60%</td>
+                  <td>100%</td>
+                  <td>2.5s</td>
+                  <td>200</td>
+                </tr>
+              </table>
+            </div>
+          </li>
+        </ul>
+      </aside>
+    </section>
   </section>
 </body>
 </html>
